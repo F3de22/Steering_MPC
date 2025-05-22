@@ -3,32 +3,21 @@
 #include <tuple>
 #include <limits.h>
 #include <math.h>
+#include "geometry.hpp"
 #include <iostream>
 #include <Eigen/Dense>
-#include <osqp.h>
 #include <mpc/LMPC.hpp>
+#include <OsqpEigen/OsqpEigen.h>
 
 using namespace std;
-
-struct MPC_config {
-    int    nx;           // numero di stati
-    int    nu;           // numero di input
-    int    op;           // orizzonte di predizione
-    int    oc;           // orizzonte di controllo (oc <= op)
-    double dt;           // passo di campionamento
-    Eigen::MatrixXd Q;   // peso stato (Nx x Nx)
-    Eigen::MatrixXd R;   // peso input (Nu x Nu)
-    Eigen::VectorXd xmin, xmax;  // limiti stato (Nx)
-    Eigen::VectorXd umin, umax;  // limiti input (Nu)
-};
 
 // MPC per il controllo dello sterzo
 class MPC {
     public:
-        MPC(double a, double b, double Iz, double mass, double Ycm, const MPC_config& config); // costruttore dell'MPC
+        MPC(); // costruttore dell'MPC
 
-
-        void discretizeEulero(const Eigen::MatrixXd& A, const Eigen::MatrixXd& B, double dt, Eigen::MatrixXd& Ad, Eigen::MatrixXd& Bd);
+        //aggiorna A e B e discretizza con metodo Zero-Order Hold ottenendo Ad e Bd --> TODO: se si crea un oggetto MPC ad ogni passo allora inserirlo nel costruttore
+        void updateDiscretization(double vx, double yaw_angle, double acc);
 
         // metodo per creare un vettore di coppie di valori (carico sulla ruota[N] + cornering stiffness[N/rad] + ) presi dal file
         vector<vector<double>>load_data();
@@ -36,17 +25,31 @@ class MPC {
         // metodo per il calcolo delle cornering stiffness 
         pair<double,double> load_transfer(double acceleration, const vector<vector<double>> &numeri);
 
+        //metodo per il calcolo della funzione di costo che restituisce l'angolo di sterzo
+        double compute(const Eigen::VectorXd& x0, vector<Point> waypoints, double yaw, double velocity);
+
     private:
         void updateDiscretization(double vx);
 
-        MPC_config cfg;
-        Eigen::MatrixXd A, B, Bdist;
-        Eigen::MatrixXd Ad, Bd, Bdd;
-        double la; // distanza tra semi-asse anteriore e centro di massa
+        //matrici da aggiornare ad ogni passo
+        Eigen::MatrixXd A, B; // matrici continue
+        Eigen::MatrixXd Ad, Bd; // matrici discrete 
+        
+        double la = 0.816; // distanza tra semi-asse anteriore e centro di massa
         double lb; // distanza tra semi-asse posteriore e centro di massa
         double Iz; // momento di inerzia
-        double m; // massa del veicolo
-        double Ycm; // altezza dell centro di massa del veicolo    
+        double m = 210.45; // massa del veicolo
+        double Ycm = 0.36; // altezza dell centro di massa del veicolo
+        int nx = 5; // numero di stati
+        int nu = 1; // numero di input
+        int op = 20; // orizzonte di predizione --> si predice il sistema per i successivi dt*op secondi, cioè dt*op*v metri
+        int oc = 10; // orizzonte di controllo (oc <= op)
+        double dt = 0.02; // passo di campionamento
+        Eigen::MatrixXd Q;   // peso stato (nx x nx) --> fare una funzione setWeight() se si vuole cambiare i pesi in certe situazioni
+        Eigen::MatrixXd R;   // peso input (nu x nu)
+        double R_delta = 1;  //peso sulla variazione di sterzo
+        Eigen::VectorXd xmin, xmax;  // limiti stato (nx)
+        Eigen::VectorXd umin, umax;  // limiti input (nu)
 
-        // TODO: aggiungi strutture per OSQP (matrici QP, solver, ecc.)
+        // TODO: aggiungere strutture per OSQP (matrici QP, solver, ecc.)
 };
