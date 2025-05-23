@@ -6,8 +6,8 @@
 #include "geometry.hpp"
 #include <iostream>
 #include <Eigen/Dense>
-#include <mpc/LMPC.hpp>
 #include <OsqpEigen/OsqpEigen.h>
+#include <osqp.h>
 
 using namespace std;
 
@@ -35,11 +35,11 @@ class MPC {
         Eigen::MatrixXd A, B; // matrici continue
         Eigen::MatrixXd Ad, Bd; // matrici discrete 
         
-        double la = 0.816; // distanza tra semi-asse anteriore e centro di massa
-        double lb; // distanza tra semi-asse posteriore e centro di massa
-        double Iz; // momento di inerzia
-        double m = 210.45; // massa del veicolo
-        double Ycm = 0.36; // altezza dell centro di massa del veicolo
+        double la = 0.792; // distanza tra semi-asse anteriore e centro di massa
+        double lb = 0.758; // distanza tra semi-asse posteriore e centro di massa
+        double Iz = 98.03; // momento di inerzia
+        double m = 320; // massa del veicolo
+        double Ycm = 0.362; // altezza dell centro di massa del veicolo
         int nx = 5; // numero di stati
         int nu = 1; // numero di input
         int op = 20; // orizzonte di predizione --> si predice il sistema per i successivi dt*op secondi, cioè dt*op*v metri
@@ -47,9 +47,13 @@ class MPC {
         double dt = 0.02; // passo di campionamento
         Eigen::MatrixXd Q;   // peso stato (nx x nx) --> fare una funzione setWeight() se si vuole cambiare i pesi in certe situazioni
         Eigen::MatrixXd R;   // peso input (nu x nu)
-        double R_delta = 1;  //peso sulla variazione di sterzo
+        Eigen::MatrixXd R_delta;  //peso sulla variazione di sterzo
         Eigen::VectorXd xmin, xmax;  // limiti stato (nx)
         Eigen::VectorXd umin, umax;  // limiti input (nu)
+        Eigen::VectorXd u_prev; // per warm start: mi salvo i controlli ottimi calcolati al passo precedente
 
-        // TODO: aggiungere strutture per OSQP (matrici QP, solver, ecc.)
+        OsqpEigen::Solver solver;
+        bool solver_initialized;
+
+        std::vector<std::vector<double>> numeri;
 };
