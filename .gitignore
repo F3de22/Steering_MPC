@@ -1,2 +1,5 @@
-/main.cpp
 /.idea/
+eigen-3.4.0/
+osqp/
+osqp-eigen/
+eigen/
