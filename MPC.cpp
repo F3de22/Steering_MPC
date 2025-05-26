@@ -14,8 +14,8 @@ MPC::MPC() : solver_initialized(false){
     umax[0] = 24* 3.14 / 180.0;
     xmin = Eigen::VectorXd::Zero(nx);
     xmax = Eigen::VectorXd::Zero(nx);
-    xmin[0] = 1.5;
-    xmax[0] = 1.5;
+    xmin[1] = 1.0; //dovrebbe essere 1.5m (larghezza minima del circuito) ma si considera la larghezza dell'auto di 1 metro
+    xmax[1] = 1.0;
 
     u_prev = Eigen::VectorXd::Zero(oc * nu);
     numeri = load_data();//legge dati da file per le cornering stiffness
@@ -52,8 +52,8 @@ void MPC::updateDiscretization(double vx, double yaw_angle, double acc) {
     A(4, 4) = -(la * la * Ka + lb * lb * Kp) / (Iz * vx);
 
     // Matrice di controllo
-    B(3, 0) = load_transfer(acc, numeri).first / m;
-    B(4, 0) = (la * load_transfer(acc, numeri).first) / Iz;
+    B(3, 0) = Ka / m;
+    B(4, 0) = (la * Ka) / Iz;
 
     Eigen::MatrixXd M(nx + nu, nx + nu);
     M.setZero();
@@ -67,7 +67,7 @@ void MPC::updateDiscretization(double vx, double yaw_angle, double acc) {
 }
 
 
-double MPC::compute(const Eigen::VectorXd& x0, vector<Point> waypoints, double yaw, double velocity){
+double MPC::compute(const Eigen::VectorXd& x0, vector<Point> waypoints){
     // Costruzione matrici di peso a blocchi
     Eigen::MatrixXd Q_blk = Eigen::MatrixXd::Zero(op * nx, op * nx);
     Eigen::MatrixXd R_blk = Eigen::MatrixXd::Zero(oc * nu, oc * nu);
@@ -119,9 +119,34 @@ double MPC::compute(const Eigen::VectorXd& x0, vector<Point> waypoints, double y
     P += D.transpose() * Rd_blk * D;
     q += (-u_prev.transpose() * Rd_blk * D).transpose();
 
-    // Vincoli sullo sterzo
-    Eigen::VectorXd lower_bound = Eigen::VectorXd::Constant(oc * nu, umin[0]);
-    Eigen::VectorXd upper_bound = Eigen::VectorXd::Constant(oc * nu, umax[0]);
+    // Crea vettori di limiti ripetuti lungo l'orizzonte
+    Eigen::VectorXd y_min_vec = Eigen::VectorXd::Constant(op, xmin[1]);
+    Eigen::VectorXd y_max_vec = Eigen::VectorXd::Constant(op, xmax[1]);
+
+    //matrice per estrarre le componenti y degli stati predetti ypred=Cy*xpred
+    Eigen::MatrixXd Cy = Eigen::MatrixXd::Zero(op, op * nx);
+    for (int i = 0; i < op; ++i)
+        Cy(i, i * nx + 1) = 1.0;
+
+    // Offset dovuto allo stato iniziale x0
+    Eigen::VectorXd y_offset = Cy * Sx * x0;
+
+    // Vincoli inferiori
+    Eigen::VectorXd lower_bound(oc * nu + 2 * op);
+    lower_bound << Eigen::VectorXd::Constant(oc * nu, umin[0]), y_min_vec - y_offset, -y_max_vec + y_offset;
+
+    // Vincoli superiori
+    Eigen::VectorXd upper_bound(oc * nu + 2 * op);
+    upper_bound << Eigen::VectorXd::Constant(oc * nu, umax[0]), y_max_vec - y_offset, -y_min_vec + y_offset;
+    
+    //matrice per i vincoli su δ
+    Eigen::MatrixXd I_u = Eigen::MatrixXd::Identity(oc * nu, oc * nu);
+
+    Eigen::MatrixXd A_y = Cy * Su;
+    Eigen::MatrixXd A_total(oc * nu + 2 * op, oc * nu);
+    A_total << I_u, A_y, -A_y;
+
+    Eigen::SparseMatrix<double> A_total_s = A_total.sparseView();
 
     // Setup ottimizzatore OSQP che calcola il controllo ottimo
     if (!solver_initialized) {
@@ -133,9 +158,7 @@ double MPC::compute(const Eigen::VectorXd& x0, vector<Point> waypoints, double y
     Eigen::SparseMatrix<double> P_s = P.sparseView();
     if (!solver.data()->setHessianMatrix(P_s)) return 0.0;
     if (!solver.data()->setGradient(q)) return 0.0;
-    Eigen::MatrixXd A = Eigen::MatrixXd::Identity(oc * nu, oc * nu);
-    Eigen::SparseMatrix<double> A_s = A.sparseView();
-    if (!solver.data()->setLinearConstraintsMatrix(A_s)) return 0.0;
+    if (!solver.data()->setLinearConstraintsMatrix(A_total_s)) return 0.0;
     if (!solver.data()->setLowerBound(lower_bound)) return 0.0;
     if (!solver.data()->setUpperBound(upper_bound)) return 0.0;
 

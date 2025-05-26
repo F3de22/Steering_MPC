@@ -5,9 +5,10 @@
 #include <math.h>
 #include "geometry.hpp"
 #include <iostream>
+#include <osqp.h>
 #include <Eigen/Dense>
 #include <OsqpEigen/OsqpEigen.h>
-#include <osqp.h>
+
 
 using namespace std;
 
@@ -26,7 +27,7 @@ class MPC {
         pair<double,double> load_transfer(double acceleration, const vector<vector<double>> &numeri);
 
         //metodo per il calcolo della funzione di costo che restituisce l'angolo di sterzo
-        double compute(const Eigen::VectorXd& x0, vector<Point> waypoints, double yaw, double velocity);
+        double compute(const Eigen::VectorXd& x0, vector<Point> waypoints);
 
     private:
         void updateDiscretization(double vx);
