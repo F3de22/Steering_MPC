@@ -10,7 +10,7 @@ MPC::MPC() : solver_initialized(false){
     //TODO: settare limiti superiori e inferiori di ingressi e stati
     umin = Eigen::VectorXd::Zero(nu);
     umax = Eigen::VectorXd::Zero(nu);
-    umin[0] = -24* 3.14 / 180.0;
+    umin[0] = -24* 3.14 / 180.0; // conversione in radianti
     umax[0] = 24* 3.14 / 180.0;
     xmin = Eigen::VectorXd::Zero(nx);
     xmax = Eigen::VectorXd::Zero(nx);

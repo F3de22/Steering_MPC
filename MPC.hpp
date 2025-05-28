@@ -9,7 +9,6 @@
 #include <Eigen/Dense>
 #include <OsqpEigen/OsqpEigen.h>
 
-
 using namespace std;
 
 // MPC per il controllo dello sterzo
@@ -20,17 +19,16 @@ class MPC {
         //aggiorna A e B e discretizza con metodo Zero-Order Hold ottenendo Ad e Bd --> TODO: se si crea un oggetto MPC ad ogni passo allora inserirlo nel costruttore
         void updateDiscretization(double vx, double yaw_angle, double acc);
 
+        //metodo per il calcolo della funzione di costo che restituisce l'angolo di sterzo
+        double compute(const Eigen::VectorXd& x0, vector<Point> waypoints);
+
+    private:
+
         // metodo per creare un vettore di coppie di valori (carico sulla ruota[N] + cornering stiffness[N/rad] + ) presi dal file
         vector<vector<double>>load_data();
 
         // metodo per il calcolo delle cornering stiffness 
         pair<double,double> load_transfer(double acceleration, const vector<vector<double>> &numeri);
-
-        //metodo per il calcolo della funzione di costo che restituisce l'angolo di sterzo
-        double compute(const Eigen::VectorXd& x0, vector<Point> waypoints);
-
-    private:
-        void updateDiscretization(double vx);
 
         //matrici da aggiornare ad ogni passo
         Eigen::MatrixXd A, B; // matrici continue
