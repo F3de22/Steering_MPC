@@ -1,2 +1,2 @@
-# MPC_FRT
-MPC for FRT Autonomous System
+# MPC
+MPC for Autonomous System
