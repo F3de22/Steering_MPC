@@ -28,6 +28,7 @@ This MPC works with the following libraries:
 - Eigen-osqp (wrapper for eigen and osqp functions)
 
 ## Example on how it works
-Here is an example on how it works on Formula Student Driverless Simulator "https://fs-driverless.github.io/Formula-Student-Driverless-Simulator/v2.2.0" (sorry for the bad quality)
-<br>
-<br>
+You can find how it works on Formula Student Driverless Simulator ("https://fs-driverless.github.io/Formula-Student-Driverless-Simulator/v2.2.0") at the followinf link:
+
+https://drive.google.com/file/d/1tgMXG8vKku1ddpA6ZOAc_11E_MhwHgCW/view?usp=drive_link
+
