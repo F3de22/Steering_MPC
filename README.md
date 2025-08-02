@@ -21,4 +21,7 @@ The cost function, to formulate the linear optimization problem, is as follow:
 <br>
 Where are applied some constraint on δ(steering angle), position X and Y.
 
+## Example on how it works
+Here is an example on how it works on Formula Student Driverless Simulator "https://fs-driverless.github.io/Formula-Student-Driverless-Simulator/v2.2.0"
+https://github.com/user-attachments/assets/68c0bf9d-8ffa-43e8-b0d1-de17da8b20c9
 
