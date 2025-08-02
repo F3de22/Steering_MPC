@@ -17,7 +17,8 @@ The state of the problem are given as follows:
 <br>
 The cost function, to formulate the linear optimization problem, is as follow:
 <br>
-<img width="1265" height="545" alt="{A4C5181D-CBCE-4E28-9B8A-BD87CC7754A1}" src="https://github.com/user-attachments/assets/6acd131e-79f8-4df6-b624-223fbfc06979" />
+<img width="725" height="308" alt="{185A0332-64B5-4987-911D-9C9ADD9F09C6}" src="https://github.com/user-attachments/assets/206c29c9-fce2-4e33-b89e-f417b45298de" />
 <br>
 Where are applied some constraint on δ(steering angle), position X and Y.
+
 
